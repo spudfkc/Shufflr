@@ -10,8 +10,13 @@ import (
 type handler struct{}
 type authHandler struct{}
 type authCallbackHandler struct{}
+type staticHandler struct{}
 
 var auth *gotify.Oauth2Authenticator
+
+func (h *staticHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+}
 
 func (h *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	auth = gotify.CreateAuthenticator(gotify.PLAYLIST_READ_PRIVATE, gotify.PLAYLIST_MODIFY_PRIVATE, gotify.PLAYLIST_MODIFY_PUBLIC)
@@ -35,8 +40,7 @@ func (h *authCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	http.ServeFile(w, r, "static/index.html")
 }
 
 func main() {
@@ -47,6 +51,8 @@ func main() {
 	http.HandleFunc("/", h.ServeHTTP)
 	http.HandleFunc("/auth", a.ServeHTTP)
 	http.HandleFunc("/auth/cb", c.ServeHTTP)
+
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	http.ListenAndServe(":8081", nil)
 	fmt.Println("Listening on 8081...")
